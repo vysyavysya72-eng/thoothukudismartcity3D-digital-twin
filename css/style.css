@@ -1,0 +1,431 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@500;700;900&display=swap');
+
+:root {
+    --bg-dark: #070c18;
+    --panel-bg: rgba(10, 18, 36, 0.85);
+    --panel-border: rgba(0, 242, 254, 0.25);
+    --panel-glow: rgba(0, 242, 254, 0.12);
+    
+    --neon-cyan: #00f2fe;
+    --neon-blue: #4facfe;
+    --neon-green: #00ff88;
+    --neon-orange: #ffaa00;
+    --neon-red: #ff0055;
+    --neon-purple: #9d4edd;
+    
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+}
+
+/* 3D WebGL Canvas Container */
+#canvasContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Sci-Fi HUD Overlay */
+#hudOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: opacity 0.3s ease;
+}
+
+#hudOverlay.clean-view {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Enable pointer events on HUD panels */
+.interactive-hud {
+    pointer-events: auto;
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 0 12px 0 var(--panel-glow);
+}
+
+/* Top Command Header (Strict Non-Overlapping Layout) */
+.top-command-header {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: linear-gradient(180deg, rgba(7, 12, 24, 0.98) 0%, rgba(10, 18, 36, 0.92) 100%);
+    border-bottom: 1px solid var(--panel-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.top-bar-primary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.brand-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    background: linear-gradient(90deg, #ffffff 0%, var(--neon-cyan) 60%, var(--neon-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Secondary Navigation & Camera Ribbon */
+.top-bar-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 18px 8px 18px;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(5, 10, 22, 0.4);
+    overflow-x: auto;
+}
+
+.camera-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.cam-btn {
+    padding: 4px 9px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 5px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.cam-btn:hover, .cam-btn.active {
+    background: rgba(0, 242, 254, 0.18);
+    border-color: var(--neon-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+}
+
+/* KPI Ticker Item */
+.kpi-ticker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* On-Screen Viewport Tools (Floating Toolbar) */
+.viewport-tools {
+    position: absolute;
+    top: 105px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 20;
+    pointer-events: auto;
+}
+
+.vp-tool-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 18, 36, 0.85);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.vp-tool-btn:hover {
+    background: rgba(0, 242, 254, 0.25);
+    border-color: var(--neon-cyan);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.vp-tool-btn.active {
+    background: var(--neon-cyan);
+    color: #070c18;
+    border-color: var(--neon-cyan);
+}
+
+/* Permanent Clean View Recovery Button (Always Visible) */
+#cleanViewRestoreBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    background: rgba(10, 18, 36, 0.9);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    display: none;
+}
+
+/* Scenario Simulation Lab Dock */
+.scenario-dock {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 680px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scenario-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.scenario-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    background: rgba(13, 27, 54, 0.9);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.scenario-btn:hover {
+    background: rgba(0, 242, 254, 0.2);
+    border-color: var(--neon-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.4);
+    transform: translateY(-1.5px);
+}
+
+.scenario-btn.active {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.35) 0%, rgba(79, 172, 254, 0.25) 100%);
+    border-color: var(--neon-cyan);
+    color: #ffffff;
+    box-shadow: 0 0 18px rgba(0, 242, 254, 0.5), inset 0 0 10px rgba(0, 242, 254, 0.3);
+}
+
+/* Right Command Center Panel */
+.right-panel {
+    position: absolute;
+    top: 105px;
+    right: 20px;
+    width: 410px;
+    max-height: calc(100vh - 130px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+}
+
+.right-panel.panel-collapsed {
+    transform: translateX(430px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--panel-border);
+    background: rgba(5, 10, 22, 0.7);
+}
+
+.panel-tab-btn {
+    flex: 1;
+    padding: 9px 6px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.panel-tab-btn:hover {
+    color: #ffffff;
+}
+
+.panel-tab-btn.active {
+    color: var(--neon-cyan);
+    border-bottom-color: var(--neon-cyan);
+    background: rgba(0, 242, 254, 0.08);
+}
+
+.panel-body {
+    padding: 14px;
+    overflow-y: auto;
+    max-height: calc(100vh - 180px);
+}
+
+/* Custom Scrollbar */
+.panel-body::-webkit-scrollbar, #alertListContainer::-webkit-scrollbar, .feed-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.panel-body::-webkit-scrollbar-track, #alertListContainer::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.panel-body::-webkit-scrollbar-thumb, #alertListContainer::-webkit-scrollbar-thumb {
+    background: var(--panel-border);
+    border-radius: 2px;
+}
+
+/* GateSense AI Split-Flap Board */
+.split-flap-board {
+    background: rgba(5, 10, 22, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.flap-row {
+    display: grid;
+    grid-template-columns: 1.4fr 0.9fr 1.1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.flap-row:last-child {
+    border-bottom: none;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-open { background: rgba(0, 255, 136, 0.15); color: var(--neon-green); border: 1px solid rgba(0, 255, 136, 0.3); }
+.status-soon { background: rgba(255, 170, 0, 0.15); color: var(--neon-orange); border: 1px solid rgba(255, 170, 0, 0.3); }
+.status-closed { background: rgba(255, 0, 85, 0.15); color: var(--neon-red); border: 1px solid rgba(255, 0, 85, 0.3); }
+.status-goods { background: rgba(157, 78, 221, 0.15); color: var(--neon-purple); border: 1px solid rgba(157, 78, 221, 0.3); }
+
+/* Route Comparison Cards */
+.route-card {
+    background: rgba(10, 18, 36, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.route-card.recommended {
+    border-color: var(--neon-green);
+    background: rgba(0, 255, 136, 0.06);
+}
+
+.route-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--neon-green);
+    color: #070c18;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* Interactive 3D Inspector Modal */
+.inspector-modal {
+    position: absolute;
+    bottom: 20px;
+    right: 440px;
+    width: 350px;
+    border-radius: 12px;
+    padding: 16px;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 25;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse animation */
+@keyframes pulseGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.pulse-dot {
+    animation: pulseGlow 1.8s infinite ease-in-out;
+}
