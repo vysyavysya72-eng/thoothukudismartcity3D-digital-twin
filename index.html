@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THOOTHUKUDI 3D DIGITAL TWIN – AI SMART CITY COMMAND CENTER</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 3D & Analytics Libraries (Local with CDN Fallback) -->
+    <script src="lib/three.min.js"></script>
+    <script>if (typeof THREE === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+    <script src="lib/OrbitControls.js"></script>
+    <script>if (typeof THREE.OrbitControls === 'undefined') document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');</script>
+    <script src="lib/chart.js"></script>
+    <script>if (typeof Chart === 'undefined') document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');</script>
+
+    <!-- Custom Command Center Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- 3D WebGL Canvas Viewport -->
+    <div id="canvasContainer"></div>
+
+    <!-- Permanent Clean View Restore Button (Visible when HUD is hidden) -->
+    <button id="cleanViewRestoreBtn" class="flex items-center gap-1.5">
+        <i class="fas fa-eye"></i> RESTORE COMMAND HUD
+    </button>
+
+    <!-- Sci-Fi Smart City Command Center HUD -->
+    <div id="hudOverlay">
+
+        <!-- 1. Top Command Header (Rigid Non-Overlapping Layout) -->
+        <header class="top-command-header interactive-hud">
+            <!-- Row 1: Brand & Key Quick Controls -->
+            <div class="top-bar-primary">
+                <!-- Left Brand & Location -->
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 text-sm shadow-[0_0_12px_rgba(0,242,254,0.3)]">
+                        <i class="fas fa-city"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="brand-title text-sm md:text-base font-bold uppercase tracking-wider">
+                                Thoothukudi 3D Digital Twin
+                            </h1>
+                            <span class="text-[10px] font-mono font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">
+                                SIMULATED SENSOR DATA – PROTOTYPE
+                            </span>
+                        </div>
+                        <div class="text-[10px] font-mono text-slate-400">
+                            AI SMART CITY COMMAND CENTER • TAMIL NADU, INDIA
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Quick Controls -->
+                <div class="flex items-center gap-2.5">
+                    <div class="kpi-ticker text-green-400 border-green-500/30 bg-green-950/30">
+                        <span class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span>
+                        <span class="font-bold">LIVE</span>
+                    </div>
+
+                    <div class="kpi-ticker text-slate-300">
+                        <i class="far fa-clock text-cyan-400"></i>
+                        <span id="liveTime">00:00:00 IST</span>
+                    </div>
+
+                    <div class="kpi-ticker">
+                        <span class="text-slate-400">Mode:</span>
+                        <span id="scenarioBadge" class="text-cyan-300 font-bold">NORMAL CITY</span>
+                    </div>
+
+                    <button id="dayNightToggle" class="px-2.5 py-1 rounded bg-slate-800/90 hover:bg-slate-700 border border-white/10 text-xs font-mono text-slate-200 transition-all flex items-center gap-1">
+                        <i class="fas fa-sun text-yellow-400"></i> DAY
+                    </button>
+
+                    <button id="toggleRightPanelBtn" class="px-2.5 py-1 rounded bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-xs font-mono text-cyan-300 transition-all flex items-center gap-1">
+                        <i class="fas fa-angles-right mr-0.5"></i> Collapse
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 2: Camera Bookmarks & Telemetry Ribbon -->
+            <div class="top-bar-secondary">
+                <!-- Camera Presets -->
+                <div class="camera-ribbon">
+                    <span class="text-[10px] font-mono text-cyan-400 font-bold mr-1">
+                        <i class="fas fa-video mr-1"></i> CAM:
+                    </span>
+                    <button class="cam-btn active" data-cam="overview">Overview</button>
+                    <button class="cam-btn" data-cam="bridge">Bridge B01</button>
+                    <button class="cam-btn" data-cam="busStand">Central Bus Stand</button>
+                    <button class="cam-btn" data-cam="railwayGate4">Gate 4 (Arterial)</button>
+                    <button class="cam-btn" data-cam="railwayGate1">Gate 1 (Melur)</button>
+                    <button class="cam-btn" data-cam="railwayGate2">Gate 2 (Korampallam)</button>
+                    <button class="cam-btn" data-cam="railwayGate3">Gate 3 (Port Rail)</button>
+                    <button class="cam-btn" data-cam="substation">TNEB Grid</button>
+                    <button class="cam-btn" data-cam="port">VOC Port</button>
+                    <button class="cam-btn" data-cam="industry">SIPCOT Ind.</button>
+                    <button class="cam-btn" data-cam="hospital">Medical Hub</button>
+                </div>
+
+                <!-- KPI Ticker Metrics -->
+                <div class="hidden lg:flex items-center gap-2">
+                    <div class="kpi-ticker">
+                        <i class="fas fa-cloud-rain text-blue-400"></i>
+                        <span class="text-slate-400">Rain:</span>
+                        <span id="kpiRain" class="text-cyan-300 font-bold">4.0 mm</span>
+                    </div>
+
+                    <div class="kpi-ticker">
+                        <i class="fas fa-water text-cyan-400"></i>
+                        <span class="text-slate-400">Canal:</span>
+                        <span id="kpiWater" class="text-cyan-300 font-bold">28%</span>
+                    </div>
+
+                    <div class="kpi-ticker">
+                        <i class="fas fa-car text-amber-400"></i>
+                        <span class="text-slate-400">Traffic:</span>
+                        <span id="kpiTraffic" class="text-amber-300 font-bold">MEDIUM</span>
+                    </div>
+
+                    <div class="kpi-ticker">
+                        <i class="fas fa-bolt text-yellow-400"></i>
+                        <span class="text-slate-400">Grid:</span>
+                        <span id="kpiPower" class="text-yellow-300 font-bold">62%</span>
+                    </div>
+
+                    <div class="kpi-ticker">
+                        <i class="fas fa-wind text-emerald-400"></i>
+                        <span class="text-slate-400">AQI:</span>
+                        <span id="kpiAqi" class="text-emerald-300 font-bold">42 Good</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-red-950/40 border border-red-500/30 text-[11px] font-mono text-red-400">
+                        <i class="fas fa-bell"></i>
+                        <span id="alertCountBadge">2</span> Alerts
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 2. On-Screen Viewport Tools (Floating Toolbar) -->
+        <div class="viewport-tools">
+            <button id="toolZoomIn" class="vp-tool-btn" title="Zoom In (+)">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button id="toolZoomOut" class="vp-tool-btn" title="Zoom Out (-)">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button id="toolTopView" class="vp-tool-btn" title="Top-Down Bird's-Eye View">
+                <i class="fas fa-compass"></i>
+            </button>
+            <button id="toolOrbit" class="vp-tool-btn" title="Toggle 360° Cinematic Orbit">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="toolCleanView" class="vp-tool-btn" title="Clean View (Hide HUD)">
+                <i class="fas fa-eye-slash"></i>
+            </button>
+        </div>
+
+        <!-- 3. Right Command Center Panel -->
+        <aside class="right-panel glass-panel interactive-hud">
+            <!-- Panel Navigation Tabs -->
+            <div class="panel-tabs">
+                <button class="panel-tab-btn active" data-tab="ai">
+                    <i class="fas fa-brain mr-1"></i> AI Engine
+                </button>
+                <button class="panel-tab-btn" data-tab="gatesense">
+                    <i class="fas fa-train mr-1 text-amber-400"></i> GateSense AI
+                </button>
+                <button class="panel-tab-btn" data-tab="matrix">
+                    <i class="fas fa-microchip mr-1"></i> Sensors
+                </button>
+                <button class="panel-tab-btn" data-tab="alerts">
+                    <i class="fas fa-triangle-exclamation mr-1"></i> Alerts
+                </button>
+            </div>
+
+            <!-- Panel Content Body -->
+            <div class="panel-body">
+                <!-- TAB 1: AI Predictive Engine -->
+                <div id="tabContent_ai" class="tab-content space-y-4">
+                    <!-- City Health Meter -->
+                    <div class="p-3 rounded-lg bg-black/40 border border-cyan-500/20">
+                        <div class="flex items-center justify-between text-xs font-mono mb-1.5">
+                            <span class="text-slate-400">City Resilience Score</span>
+                            <span id="overallHealthScore" class="text-cyan-300 font-bold text-base">94%</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400 leading-snug">
+                            Multivariate anomaly heuristics running in real-time across 42 sensor channels.
+                        </div>
+                    </div>
+
+                    <!-- AI Risk Forecast Meters -->
+                    <div class="space-y-2 text-xs font-mono">
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-300">Flood Inundation Risk</span>
+                                <span id="riskFloodVal" class="text-cyan-400 font-bold">15%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden">
+                                <div id="riskFloodBar" class="h-full bg-cyan-400 rounded transition-all duration-500" style="width: 15%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-300">Bridge B01 Structural Risk</span>
+                                <span id="riskBridgeVal" class="text-blue-400 font-bold">12%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden">
+                                <div id="riskBridgeBar" class="h-full bg-blue-400 rounded transition-all duration-500" style="width: 12%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-300">Traffic Congestion Index</span>
+                                <span id="riskTrafficVal" class="text-amber-400 font-bold">35%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden">
+                                <div id="riskTrafficBar" class="h-full bg-amber-400 rounded transition-all duration-500" style="width: 35%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-300">TNEB Transformer Fault Risk</span>
+                                <span id="riskTransformerVal" class="text-yellow-400 font-bold">22%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden">
+                                <div id="riskTransformerBar" class="h-full bg-yellow-400 rounded transition-all duration-500" style="width: 22%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-300">SIPCOT Industrial Hazard Risk</span>
+                                <span id="riskIndustrialVal" class="text-red-400 font-bold">18%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-slate-800 rounded overflow-hidden">
+                                <div id="riskIndustrialBar" class="h-full bg-red-400 rounded transition-all duration-500" style="width: 18%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart.js Trend Canvas -->
+                    <div class="pt-2 border-t border-white/5">
+                        <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                            <span><i class="fas fa-chart-line text-cyan-400 mr-1"></i> AI RISK PREDICTION TREND</span>
+                            <span class="text-[10px] text-slate-500">Live 2s Stream</span>
+                        </div>
+                        <div class="h-40 w-full relative">
+                            <canvas id="riskTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: GateSense AI Intelligence Suite (from vysyavysya72-eng/gatesense-ai) -->
+                <div id="tabContent_gatesense" class="tab-content hidden space-y-3 font-mono">
+                    <!-- Top Actions Ribbon: Tamil Voice Alert & Emergency Toggle -->
+                    <div class="flex gap-2">
+                        <button id="gateVoiceAlertBtn" class="flex-1 py-1.5 px-2.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fas fa-volume-high"></i> தமிழ் Voice Alert
+                        </button>
+                        <button id="gateEmergencyModeBtn" class="flex-1 py-1.5 px-2.5 rounded bg-slate-800 hover:bg-red-950/40 border border-white/10 text-slate-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fas fa-ambulance text-red-400"></i> Emergency Bypass
+                        </button>
+                    </div>
+
+                    <!-- Leave-Now Recommendation Banner -->
+                    <div id="leaveNowBanner" class="p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/40 text-xs">
+                        <!-- Populated by UIController -->
+                    </div>
+
+                    <!-- Split-Flap Gate Status Board -->
+                    <div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 uppercase">
+                            <span><i class="fas fa-layer-group text-cyan-400 mr-1"></i> Thoothukudi 4-Gate Board</span>
+                            <span class="text-[10px] text-green-400">Live Synced</span>
+                        </div>
+                        <div id="gateSenseSplitFlap" class="split-flap-board">
+                            <!-- Populated by UIController -->
+                        </div>
+                    </div>
+
+                    <!-- Route Planner: Via Crossing vs Bypass -->
+                    <div class="p-3 rounded-lg bg-black/40 border border-white/5 space-y-2">
+                        <div class="text-[11px] font-bold text-cyan-300 flex items-center justify-between">
+                            <span><i class="fas fa-route text-cyan-400 mr-1"></i> Gate-Aware Route Planner</span>
+                            <button id="gatePlanRouteBtn" class="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[10px]">
+                                Recalculate
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <input id="routeFromInput" type="text" value="Old Bus Stand" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-slate-200 text-[11px] focus:outline-none focus:border-cyan-400">
+                            <input id="routeToInput" type="text" value="V.O.C. Port Terminal" class="bg-black/50 border border-white/10 rounded px-2 py-1 text-slate-200 text-[11px] focus:outline-none focus:border-cyan-400">
+                        </div>
+                        <div id="routeComparisonContainer" class="pt-1">
+                            <!-- Populated by UIController -->
+                        </div>
+                    </div>
+
+                    <!-- Southern Railway Schedule Search & Table -->
+                    <div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
+                            <span><i class="fas fa-calendar-days text-amber-400 mr-1"></i> Southern Railway Schedule</span>
+                            <input id="trainSearchInput" type="text" placeholder="Search train / gate..." class="bg-black/40 border border-white/10 rounded px-2 py-0.5 text-[10px] text-slate-200 w-32 focus:outline-none focus:border-amber-400">
+                        </div>
+                        <div class="max-h-36 overflow-y-auto border border-white/5 rounded bg-black/30">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-900 text-slate-400 text-[10px] sticky top-0">
+                                    <tr>
+                                        <th class="p-1.5">No.</th>
+                                        <th class="p-1.5">Train Name</th>
+                                        <th class="p-1.5">Time</th>
+                                        <th class="p-1.5">Crossing</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trainScheduleBody">
+                                    <!-- Populated by UIController -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Citizen Crowdsourced Verification Feed -->
+                    <div>
+                        <div class="text-[11px] text-slate-400 mb-1 flex items-center justify-between">
+                            <span><i class="fas fa-users text-cyan-400 mr-1"></i> Citizen Reports & Trust Layer</span>
+                            <span class="text-[10px] text-slate-500">Community Verified</span>
+                        </div>
+                        <div id="citizenFeedList" class="feed-scroll max-h-32 overflow-y-auto">
+                            <!-- Populated by UIController -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Sensor Matrix -->
+                <div id="tabContent_matrix" class="tab-content hidden space-y-3">
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-cyan-300 mb-1">
+                            <span>Buckle Canal Hydrology</span>
+                            <span class="text-green-400">ONLINE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Canal Flow: 340 m³/s • Depth: 2.1 m • Risk: Low</div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-yellow-300 mb-1">
+                            <span>TNEB Substation T01</span>
+                            <span class="text-green-400">ONLINE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Voltage: 11.2 kV • Temp: 58.4°C • Load: 62%</div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-blue-300 mb-1">
+                            <span>VOC Port Maritime</span>
+                            <span class="text-green-400">ACTIVE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Tide: 1.2 m • Berth #4 • Cranes: 2 STS Active</div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-purple-300 mb-1">
+                            <span>SIPCOT Chemical Plant</span>
+                            <span class="text-green-400">NORMAL</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">VOC Gas: 18 ppm • Scrubbers: 98% Efficiency</div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-emerald-300 mb-1">
+                            <span>Municipal Water Grid</span>
+                            <span class="text-green-400">PRESSURE OK</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Reservoir W01: 84.5% Cap • Pressure: 4.2 bar</div>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-black/30 border border-white/5 text-xs font-mono">
+                        <div class="flex justify-between font-bold text-green-300 mb-1">
+                            <span>Smart Waste Management</span>
+                            <span class="text-green-400">3 UNITS</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Bin #1: 42% • Bin #2: 76% (Near Alert) • Bin #3: 28%</div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Alert Log -->
+                <div id="tabContent_alerts" class="tab-content hidden space-y-2.5">
+                    <div id="alertListContainer" class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                        <!-- Populated dynamically by UIController -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 4. Simulation Lab Dock (Bottom Left) -->
+        <div class="scenario-dock interactive-hud">
+            <div class="flex items-center justify-between px-1">
+                <span class="text-[11px] font-mono font-bold text-cyan-400 tracking-wider flex items-center">
+                    <i class="fas fa-flask-vial mr-1.5"></i> AI SCENARIO SIMULATION LAB
+                </span>
+                <span class="text-[10px] font-mono text-slate-400">Click to trigger full 3D physics reaction</span>
+            </div>
+
+            <div class="scenario-btn-group">
+                <button class="scenario-btn active" data-scenario="NORMAL_CITY">
+                    <i class="fas fa-check-circle text-green-400"></i> NORMAL CITY
+                </button>
+                <button class="scenario-btn" data-scenario="HEAVY_RAIN">
+                    <i class="fas fa-cloud-showers-heavy text-cyan-400"></i> HEAVY RAIN
+                </button>
+                <button class="scenario-btn" data-scenario="FLOOD_EMERGENCY">
+                    <i class="fas fa-house-flood-water text-blue-400"></i> FLOOD EMERGENCY
+                </button>
+                <button class="scenario-btn" data-scenario="TRAIN_APPROACHING">
+                    <i class="fas fa-train text-amber-400"></i> TRAIN APPROACHING
+                </button>
+                <button class="scenario-btn" data-scenario="TRAFFIC_CONGESTION">
+                    <i class="fas fa-traffic-light text-yellow-400"></i> TRAFFIC CONGESTION
+                </button>
+                <button class="scenario-btn" data-scenario="TRANSFORMER_FAULT">
+                    <i class="fas fa-bolt text-red-400"></i> TRANSFORMER FAULT
+                </button>
+                <button class="scenario-btn" data-scenario="INDUSTRIAL_EMERGENCY">
+                    <i class="fas fa-triangle-exclamation text-rose-500"></i> INDUSTRIAL EMERGENCY
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. Interactive 3D Digital Twin Inspector Card / Modal -->
+        <div id="inspectorModal" class="inspector-modal glass-panel interactive-hud hidden">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 pulse-dot"></span>
+                    <h2 id="inspectorTitle" class="text-xs font-bold text-slate-100 font-mono tracking-wide">
+                        Infrastructure Digital Twin
+                    </h2>
+                </div>
+                <button id="closeInspectorBtn" class="text-slate-400 hover:text-white text-xs">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono mb-3">
+                <span id="inspectorDistrict" class="text-slate-400">Thoothukudi Smart City Grid</span>
+                <span id="inspectorStatus" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-green-500/20 text-green-400 border border-green-500/30">
+                    OPERATIONAL
+                </span>
+            </div>
+
+            <!-- Dynamic Telemetric Gauges -->
+            <div id="inspectorDetails" class="mb-3">
+                <!-- Injected via UIController -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div id="inspectorActions" class="flex gap-2">
+                <!-- Injected via UIController -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Application Modular Architecture Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/sensor-hub.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/gatesense-twin.js"></script>
+    <script src="js/environmental-system.js"></script>
+    <script src="js/city-builder.js"></script>
+    <script src="js/bridge-twin.js"></script>
+    <script src="js/railway-twin.js"></script>
+    <script src="js/power-twin.js"></script>
+    <script src="js/port-twin.js"></script>
+    <script src="js/industry-twin.js"></script>
+    <script src="js/traffic-system.js"></script>
+    <script src="js/emergency-system.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
